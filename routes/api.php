@@ -33,14 +33,17 @@ Route::middleware('auth:sanctum')->group(function () {
     // Отримання всіх юзерів
     Route::get('users', [UserController::class, 'index']);
 
+    
     // Загрузити фото юзера
     Route::post('upload-user-photo', [UserController::class, 'uploadPhoto']);
 
+    Route::get('auth/me', [UserController::class, 'me']);
+    
     // Вихід з сесії
-    Route::post('/logout', [UserController::class, 'logout']);
+    Route::post('auth/logout', [UserController::class, 'logout']);
 
 });
 
 
-Route::post('/login', [UserController::class, 'login']);
-Route::post('/register', [UserController::class, 'register']);
+Route::post('auth/login', [UserController::class, 'login']);
+Route::post('auth/register', [UserController::class, 'register']);
