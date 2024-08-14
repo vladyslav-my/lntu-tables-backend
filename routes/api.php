@@ -26,24 +26,25 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Прийняти запрошення на столик
     Route::post('/accept-booked-tables/{id}', [BookedTableController::class, 'accept']);
-    
+
     // Отримати дані користувача, який в сесії
     Route::get('users/me', [UserController::class, 'show']);
 
     // Отримання всіх юзерів
     Route::get('users', [UserController::class, 'index']);
 
-    
+
     // Загрузити фото юзера
     Route::post('upload-user-photo', [UserController::class, 'uploadPhoto']);
 
-    Route::get('auth/me', [UserController::class, 'me']);
-    
+
     // Вихід з сесії
     Route::post('auth/logout', [UserController::class, 'logout']);
 
+    Route::get('auth/me', [UserController::class, 'me']);
 });
 
 
 Route::post('auth/login', [UserController::class, 'login']);
 Route::post('auth/register', [UserController::class, 'register']);
+Route::get('auth/check-token', [UserController::class, 'checkToken']);

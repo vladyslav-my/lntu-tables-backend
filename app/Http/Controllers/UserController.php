@@ -6,9 +6,12 @@ use App\Http\Resources\User\AuthResource;
 use App\Http\Resources\User\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class UserController extends Controller
 {
@@ -28,32 +31,37 @@ class UserController extends Controller
 
     public function login(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|string|email|max:255',
-            'password' => 'required|string|min:8',
+        $credentials = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
         ]);
 
+        $user = User::where('email', $credentials['email'])->first();
 
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
+        if (!$user) {
+            return response()->json([
+                'message' => 'User not found.',
+            ], 404);
         }
 
+        if (!$user || !Hash::check($credentials['password'], $user->password)) {
 
-        $user = User::where('email', $request->email)->first();
-
-        if (!$user && !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
         }
 
-        return AuthResource::make($user);
+        $token = $user->createToken('token')->plainTextToken;
+        
+        return response()->json([
+            'token' => $token,
+        ], 200);
     }
 
 
     public function register(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $fields = $request->validate([
             'name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'phone_number' => 'required|string|max:255',
@@ -61,20 +69,21 @@ class UserController extends Controller
             'password' => 'required|string|min:8|confirmed',
         ]);
 
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
-        }
-
         $user = User::create([
-            'name' => $request->name,
-            'last_name' => $request->last_name,
-            'phone_number' => $request->phone_number,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'name' => $fields['name'],
+            'last_name' => $fields['last_name'],
+            'phone_number' => $fields['phone_number'],
+            'email' => $fields['email'],
+            'password' => Hash::make($fields['password']),
         ]);
 
+        $token = $user->createToken('token')->plainTextToken;
 
-        return AuthResource::make($user);
+        $response = [
+            'token' => $token,
+        ];
+
+        return response()->json($response, 201);
     }
 
 
@@ -90,10 +99,33 @@ class UserController extends Controller
 
     public function me(Request $request)
     {
-
         return [
             'id' => $request->user()->id,
         ];
+    }
+
+
+    public function checkToken(Request $request)
+    {
+        $token = $request->bearerToken();
+
+        $tokenData = PersonalAccessToken::findToken($token);
+        
+        $isExpired = null;
+        $isRevoked = null;
+
+        if ($tokenData) {
+            $isExpired = $tokenData->expires_at !== null && $tokenData->expires_at->isPast();
+            $isRevoked = $tokenData->revoked;
+        }
+
+        $isValid = $tokenData && !$isExpired && !$isRevoked;
+
+        return response()->json(
+            [
+                'is_valid' => $isValid,
+            ], 200
+        );
     }
 
     public function show(Request $request)
