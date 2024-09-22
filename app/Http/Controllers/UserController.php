@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\User\AuthResource;
 use App\Http\Resources\User\UserResource;
+use App\Http\Resources\User\UsersResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -26,7 +27,7 @@ class UserController extends Controller
             ->limit(5)
             ->get();
 
-        return UserResource::collection($users);
+        return UsersResource::collection($users);
     }
 
     public function login(Request $request)
@@ -45,12 +46,12 @@ class UserController extends Controller
         }
 
         if (!$user || !Hash::check($credentials['password'], $user->password)) {
-
-            throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
-            ]);
+            return response()->json([
+                'message' => 'The provided credentials are incorrect.',
+            ], 401);
         }
 
+        
         $token = $user->createToken('token')->plainTextToken;
         
         return response()->json([
@@ -64,7 +65,7 @@ class UserController extends Controller
         $fields = $request->validate([
             'name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'phone_number' => 'required|string|max:255',
+            'phone_number' => 'required|string|max:255|unique:users',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
         ]);

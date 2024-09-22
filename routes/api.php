@@ -12,20 +12,23 @@ Route::middleware('auth:sanctum')->group(function () {
     // Запрошення на столик користувача, який в сесії
     Route::get('/booked-tables', [BookedTableController::class, 'index']);
 
-    // Заброньована час на якусь дату
+    // Заброньований час на якусь дату
     Route::get('/booked-tables-time/{tableId}', [BookedTableController::class, 'time']);
+
+    // Доступний час на якусь дату
+    Route::get('/available-time/{tableId}', [BookedTableController::class, 'availableTime']);
 
     // Забронювати столик
     Route::post('/booked-tables/{tableId}', [BookedTableController::class, 'store']);
 
     // Відмінити запрошення на столик
-    Route::post('/cancel-booked-tables/{id}', [BookedTableController::class, 'cancel']);
+    Route::post('/cancel-booked-tables/{userId}', [BookedTableController::class, 'cancel']);
 
     // Відхилити запрошення на столик
-    Route::post('/decline-booked-tables/{id}', [BookedTableController::class, 'decline']);
+    Route::post('/decline-booked-tables/{userId}', [BookedTableController::class, 'decline']);
 
     // Прийняти запрошення на столик
-    Route::post('/accept-booked-tables/{id}', [BookedTableController::class, 'accept']);
+    Route::post('/accept-booked-tables/{userId}', [BookedTableController::class, 'accept']);
 
     // Отримати дані користувача, який в сесії
     Route::get('users/me', [UserController::class, 'show']);

@@ -103,10 +103,63 @@ class BookedTableController extends Controller
     }
 
 
-    public function cancel($id)
+    public function availableTime(Request $request, BookedTable $bookedTable, string $tableId)
+    {
+        $validator = Validator::make($request->all(), [
+            'date_picker' => 'required|date_format:Y-m-d',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        // Отримуємо всі заброньовані столики на обрану дату
+        $bookedTables = $bookedTable
+            ->where('table_id', $tableId)
+            ->whereBetween('time_from', [$request->date_picker . ' 00:00:00', $request->date_picker . ' 23:59:59'])
+            ->get();
+
+        // Генеруємо часові проміжки з 9:00 до 19:00 з кроком у 30 хвилин
+        $startTime = Carbon::createFromFormat('H:i', '09:00');
+        $endTime = Carbon::createFromFormat('H:i', '19:00');
+        $timeSlots = [];
+
+        while ($startTime < $endTime) {
+            $timeSlots[] = $startTime->format('H:i');
+            $startTime->addMinutes(30);
+        }
+
+        // Перевіряємо кожен часовий проміжок на наявність колізій
+        $availableSlots = [];
+
+        foreach ($timeSlots as $slot) {
+            $slotStart = Carbon::createFromFormat('Y-m-d H:i', $request->date_picker . ' ' . $slot);
+            $slotEnd = $slotStart->copy()->addMinutes(30);
+
+            $hasCollision = $bookedTables->some(function ($booked) use ($slotStart, $slotEnd) {
+                $bookedStart = Carbon::parse($booked->time_from);
+                $bookedEnd = Carbon::parse($booked->time_to);
+
+                // Перевіряємо, чи є перетин, виключаючи кінець проміжку
+                return $slotStart->lt($bookedEnd) && $slotEnd->gt($bookedStart);
+            });
+
+            // Якщо колізій немає, додаємо цей проміжок до доступних
+            if (!$hasCollision) {
+                $availableSlots[] = $slotStart->format('H:i');
+            }
+        }
+
+        // Повертаємо доступні часові проміжки
+        return response()->json($availableSlots);
+    }
+
+
+
+    public function cancel($userId)
     {
         $user = auth()->user();
-        $bookedTable = BookedTable::find($id)->where('user_id', $user->id)->update(['status' => 'rejected']);
+        $bookedTable = BookedTable::find($userId)->where('user_id', $user->id)->update(['status' => 'rejected']);
 
         if ($bookedTable) {
             return response()->json([
@@ -116,10 +169,10 @@ class BookedTableController extends Controller
     }
 
 
-    public function decline($id)
+    public function decline($userId)
     {
         $user = auth()->user();
-        $bookedTable = BookedTable::find($id)->where('guest_id', $user->id)->update(['guest_accepted' => false]);
+        $bookedTable = BookedTable::find($userId)->where('guest_id', $user->id)->update(['guest_accepted' => false]);
 
         if ($bookedTable) {
             return response()->json([
@@ -129,10 +182,10 @@ class BookedTableController extends Controller
     }
 
 
-    public function accept($id)
+    public function accept($userId)
     {
         $user = auth()->user();
-        $bookedTable = BookedTable::find($id)->where('guest_id', $user->id)->update(['guest_accepted' => true]);
+        $bookedTable = BookedTable::find($userId)->where('guest_id', $user->id)->update(['guest_accepted' => true]);
 
         if ($bookedTable) {
             return response()->json([
