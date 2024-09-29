@@ -57,8 +57,7 @@ class BookedTableController extends Controller
         }
 
         $time_from = Carbon::parse("{$request->data_picker} {$request->time_picker}");
-        $time_to = $time_from->addMinute($request->duration);
-
+        $time_to = $time_from->copy()->addMinutes($request->duration);
 
         $bookedTable = BookedTable::create([
             'user_id' => auth()->user()->id,
@@ -104,55 +103,57 @@ class BookedTableController extends Controller
 
 
     public function availableTime(Request $request, BookedTable $bookedTable, string $tableId)
-    {
-        $validator = Validator::make($request->all(), [
-            'date_picker' => 'required|date_format:Y-m-d',
-        ]);
+{
+    $validator = Validator::make($request->all(), [
+        'date_picker' => 'required|date_format:Y-m-d',
+    ]);
 
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
-        }
-
-        // Отримуємо всі заброньовані столики на обрану дату
-        $bookedTables = $bookedTable
-            ->where('table_id', $tableId)
-            ->whereBetween('time_from', [$request->date_picker . ' 00:00:00', $request->date_picker . ' 23:59:59'])
-            ->get();
-
-        // Генеруємо часові проміжки з 9:00 до 19:00 з кроком у 30 хвилин
-        $startTime = Carbon::createFromFormat('H:i', '09:00');
-        $endTime = Carbon::createFromFormat('H:i', '19:00');
-        $timeSlots = [];
-
-        while ($startTime < $endTime) {
-            $timeSlots[] = $startTime->format('H:i');
-            $startTime->addMinutes(30);
-        }
-
-        // Перевіряємо кожен часовий проміжок на наявність колізій
-        $availableSlots = [];
-
-        foreach ($timeSlots as $slot) {
-            $slotStart = Carbon::createFromFormat('Y-m-d H:i', $request->date_picker . ' ' . $slot);
-            $slotEnd = $slotStart->copy()->addMinutes(30);
-
-            $hasCollision = $bookedTables->some(function ($booked) use ($slotStart, $slotEnd) {
-                $bookedStart = Carbon::parse($booked->time_from);
-                $bookedEnd = Carbon::parse($booked->time_to);
-
-                // Перевіряємо, чи є перетин, виключаючи кінець проміжку
-                return $slotStart->lt($bookedEnd) && $slotEnd->gt($bookedStart);
-            });
-
-            // Якщо колізій немає, додаємо цей проміжок до доступних
-            if (!$hasCollision) {
-                $availableSlots[] = $slotStart->format('H:i');
-            }
-        }
-
-        // Повертаємо доступні часові проміжки
-        return response()->json($availableSlots);
+    if ($validator->fails()) {
+        return response()->json($validator->errors(), 422);
     }
+
+    // Получаем все забронированные столики на выбранную дату
+    $bookedTables = $bookedTable
+        ->where('table_id', $tableId)
+        ->whereDate('time_from', $request->date_picker)
+        ->get();
+        
+    // Генерируем временные интервалы с 9:00 до 19:00 с шагом в 30 минут
+    $startTime = Carbon::createFromFormat('H:i', '09:00');
+    $endTime = Carbon::createFromFormat('H:i', '19:00');
+    $timeSlots = [];
+
+    while ($startTime < $endTime) {
+        $timeSlots[] = $startTime->copy(); // Клонируем объект, чтобы не изменять основной объект
+        $startTime->addMinutes(30);
+    }
+
+    // Проверяем каждый временной интервал на наличие коллизий
+    $availableSlots = [];
+
+    foreach ($timeSlots as $slot) {
+        $slotStart = Carbon::createFromFormat('Y-m-d H:i', $request->date_picker . ' ' . $slot->format('H:i'));
+        $slotEnd = $slotStart->copy()->addMinutes(30);
+
+        // Проверяем коллизии с уже забронированными временными интервалами
+        $hasCollision = $bookedTables->filter(function ($booked) use ($slotStart, $slotEnd) {
+            $bookedStart = Carbon::parse($booked->time_from);
+            $bookedEnd = Carbon::parse($booked->time_to);
+
+            // Проверяем перетин интервалов (исключаем конец интервала)
+            return $slotStart->lt($bookedEnd) && $slotEnd->gt($bookedStart);
+        })->count() > 0;
+
+        // Если коллизий нет, добавляем этот временной интервал в доступные
+        if (!$hasCollision) {
+            $availableSlots[] = $slotStart->format('H:i');
+        }
+    }
+
+    // Возвращаем доступные временные интервалы
+    return response()->json($availableSlots);
+}
+
 
 
 
