@@ -15,7 +15,6 @@ return new class extends Migration
     {
         Schema::create('booked_tables', function (Blueprint $table) {
             $table->id();
-            $table->unique(['user_id', 'guest_id']);
             $table->foreignIdFor(User::class, 'user_id')->constrained();
             $table->foreignIdFor(User::class, 'guest_id')->constrained('users');
             $table->boolean('user_accepted')->default(true);

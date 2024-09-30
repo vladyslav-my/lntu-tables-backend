@@ -2,16 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\User\AuthResource;
-use App\Http\Resources\User\UserResource;
 use App\Http\Resources\User\UsersResource;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\ValidationException;
 use Laravel\Sanctum\PersonalAccessToken;
 
 class UserController extends Controller
@@ -22,8 +16,11 @@ class UserController extends Controller
     {
         $search = $request->query('search');
 
-        $users = User::where('name', 'LIKE', "%$search%")
-            ->orWhere('last_name', 'LIKE', "%$search%")
+        $users = User::where('id', '!=', auth()->id())
+            ->where(function ($query) use ($search) {
+                $query->where('name', 'LIKE', "%$search%")
+                    ->orWhere('last_name', 'LIKE', "%$search%");
+            })
             ->limit(5)
             ->get();
 
@@ -51,9 +48,9 @@ class UserController extends Controller
             ], 401);
         }
 
-        
+
         $token = $user->createToken('token')->plainTextToken;
-        
+
         return response()->json([
             'token' => $token,
         ], 200);
@@ -111,7 +108,7 @@ class UserController extends Controller
         $token = $request->bearerToken();
 
         $tokenData = PersonalAccessToken::findToken($token);
-        
+
         $isExpired = null;
         $isRevoked = null;
 
@@ -125,7 +122,8 @@ class UserController extends Controller
         return response()->json(
             [
                 'is_valid' => $isValid,
-            ], 200
+            ],
+            200
         );
     }
 

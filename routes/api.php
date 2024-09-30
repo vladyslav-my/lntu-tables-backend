@@ -22,13 +22,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/booked-tables/{tableId}', [BookedTableController::class, 'store']);
 
     // Відмінити запрошення на столик
-    Route::post('/cancel-booked-tables/{userId}', [BookedTableController::class, 'cancel']);
+    Route::post('/cancel-booked-tables/{bookedTableId}', [BookedTableController::class, 'cancel']);
 
     // Відхилити запрошення на столик
-    Route::post('/decline-booked-tables/{userId}', [BookedTableController::class, 'decline']);
+    Route::post('/decline-booked-tables/{bookedTableId}', [BookedTableController::class, 'decline']);
 
     // Прийняти запрошення на столик
-    Route::post('/accept-booked-tables/{userId}', [BookedTableController::class, 'accept']);
+    Route::post('/accept-booked-tables/{bookedTableId}', [BookedTableController::class, 'accept']);
 
     // Отримати дані користувача, який в сесії
     Route::get('users/me', [UserController::class, 'show']);
@@ -36,10 +36,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Отримання всіх юзерів
     Route::get('users', [UserController::class, 'index']);
 
-
     // Загрузити фото юзера
     Route::post('upload-user-photo', [UserController::class, 'uploadPhoto']);
-
 
     // Вихід з сесії
     Route::post('auth/logout', [UserController::class, 'logout']);
