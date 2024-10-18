@@ -18,7 +18,6 @@ class BookedTableController extends Controller
         $tab = $request->query('tab', 'current');
 
         $userId = auth()->user()->id;
-
         if ($tab === 'my') {
             $bookedTables = BookedTable
                 ::where('user_id', $userId)

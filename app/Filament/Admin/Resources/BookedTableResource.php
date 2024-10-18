@@ -7,7 +7,6 @@ use App\Models\BookedTable;
 use App\Models\User;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -27,14 +26,11 @@ class BookedTableResource extends Resource
     {
         return $form
             ->schema([
-                // Выбор стола по номеру
                 Select::make('table_id')
                     ->label('Table Number')
                     ->options(TableModel::all()->pluck('number', 'id'))
                     ->required()
                     ->searchable(),
-
-                // Выбор статуса
                 Select::make('status')->options([
                     'pending' => 'Pending',
                     'accepted' => 'Accepted',
@@ -44,7 +40,7 @@ class BookedTableResource extends Resource
                 ->default('pending')
                 ->required(),
 
-                // Выбор пользователя (user_id)
+
                 Select::make('user_id')
                     ->label('User')
                     ->options(User::all()->mapWithKeys(function ($user) {
@@ -54,7 +50,6 @@ class BookedTableResource extends Resource
                     ->searchable()
                     ->rule('different:guest_id'),
 
-                // Выбор гостя (guest_id)
                 Select::make('guest_id')
                     ->label('Guest')
                     ->options(User::all()->mapWithKeys(function ($user) {
@@ -64,17 +59,14 @@ class BookedTableResource extends Resource
                     ->searchable()
                     ->rule('different:user_id'),
 
-                // Switch для user_accepted
                 Toggle::make('user_accepted')
                     ->label('User Accepted')
-                    ->inline(false), // Делает переключатель в форме
+                    ->inline(false),
 
-                // Switch для guest_accepted
                 Toggle::make('guest_accepted')
                     ->label('Guest Accepted')
-                    ->inline(false), // Делает переключатель в форме
+                    ->inline(false),
 
-                // Время бронирования
                 DateTimePicker::make('time_from')->seconds(false)->required(),
                 DateTimePicker::make('time_to')->seconds(false)->required(),
             ]);
