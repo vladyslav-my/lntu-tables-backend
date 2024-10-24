@@ -49,8 +49,8 @@ class BookedTableController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'guest_id' => 'required|integer',
-            'data_picker' => 'required|date_format:Y-m-d',
-            'time_picker' => 'required|date_format:H:i:s',
+            'date_picker' => 'required|date_format:Y-m-d',
+            'time_picker' => 'required|date_format:H:i',
             'duration' => 'required|integer',
         ]);
 
@@ -172,9 +172,9 @@ class BookedTableController extends Controller
             }
         }
 
-        if (count($availableSlots) === 0) {
-            return response()->json(['message' => 'No available time slots found.'], 404);
-        }
+        //if (count($availableSlots) === 0) {
+        //    return response()->json(['message' => 'No available time slots found.'], 404);
+        //}
 
         return response()->json($availableSlots);
     }

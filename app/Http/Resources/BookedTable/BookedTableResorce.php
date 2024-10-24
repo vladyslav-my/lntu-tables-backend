@@ -27,15 +27,13 @@ class BookedTableResorce extends JsonResource
             ],
             'user' => [
                 "id" => $this->user_id,
-                "name" => $this->user->name,
-                "last_name" => $this->user->last_name,
+                "full_name" => "{$this->user->name} {$this->user->last_name}",
                 "image" => null,
                 "role" => $this->user->role
             ],
             'guest' => [
                 "id" => $this->guest_id,
-                "name" => $this->guest->name,
-                "last_name" => $this->guest->last_name,
+                "full_name" => "{$this->user->name} {$this->user->last_name}",
                 "image" => null,
                 "role" => $this->guest->role
             ],

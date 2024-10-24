@@ -16,7 +16,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/booked-tables-time/{tableId}', [BookedTableController::class, 'time']);
 
     // Доступний час на якусь дату
-    Route::post('/available-time/{tableId}', [BookedTableController::class, 'availableTime']);
+    Route::get('/available-time/{tableId}', [BookedTableController::class, 'availableTime']);
 
     // Забронювати столик
     Route::post('/booked-tables/{tableId}', [BookedTableController::class, 'store']);
