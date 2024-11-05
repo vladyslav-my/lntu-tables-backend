@@ -21,6 +21,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // Забронювати столик
     Route::post('/booked-tables/{tableId}', [BookedTableController::class, 'store']);
 
+
+    // Об'єднанні дії
+    Route::patch('/booked-tables/{bookedTableId}/{action}', [BookedTableController::class, 'updateStatus']);
+
     // Відмінити запрошення на столик
     Route::post('/cancel-booked-tables/{bookedTableId}', [BookedTableController::class, 'cancel']);
 

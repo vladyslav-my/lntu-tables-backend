@@ -33,10 +33,11 @@ class BookedTableResorce extends JsonResource
             ],
             'guest' => [
                 "id" => $this->guest_id,
-                "full_name" => "{$this->user->name} {$this->user->last_name}",
+                "full_name" => "{$this->guest->name} {$this->guest->last_name}",
                 "image" => null,
                 "role" => $this->guest->role
             ],
+            'is_guest' => $this->guest_id === auth()->user()->id,
             'user_accepted' => (bool) $this->user_accepted,
             'guest_accepted' => (bool) $this->guest_accepted,
             'status' => $this->status,

@@ -92,7 +92,7 @@ class BookedTableController extends Controller
         if ($bookedTable) {
             $guest = User::find($request->guest_id);
             Mail::to($guest->email)->send(new BookedTableNotification($bookedTable));
-            
+
 
             return response()->json(['message' => 'Table booked successfully'], 201);
         }
@@ -178,6 +178,45 @@ class BookedTableController extends Controller
 
         return response()->json($availableSlots);
     }
+
+    public function updateStatus(string $bookedTableId, string $action)
+    {
+        $data = [];
+
+        $bookedTable = BookedTable::where('id', $bookedTableId)->first();
+
+        if (!$bookedTable) {
+            return response()->json(['message' => 'Booked table not found'], 404);
+        }
+
+        $isGuest = $bookedTable->guest_id === auth()->user()->id;
+        $isUser = $bookedTable->user_id === auth()->user()->id;
+
+        switch ($action) {
+            case 'decline':
+                $data = ['status' => 'rejected'];
+                if ($isGuest) {
+                    $data['guest_accepted'] = false;
+                } elseif ($isUser) {
+                    $data['user_accepted'] = false;
+                } else {
+                    return response()->json(['message' => 'Invalid initiator'], 400);
+                }
+                break;
+            case 'accept':
+                $data = ['status' => 'accepted', 'guest_accepted' => true];
+                break;
+            default:
+                return response()->json(['message' => 'Invalid action'], 400);
+        }
+        $bookedTable = BookedTable::where('id', $bookedTableId)->update($data);
+        //! $bookedTable->update($data);
+
+        return response()->json([
+            'message' => ucfirst($action) . ' action completed successfully',
+        ], 200);
+    }
+
 
     public function cancel(string $bookedTableId)
     {
